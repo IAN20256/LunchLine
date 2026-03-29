@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LunchLine</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#f7f5f0;--card:#fff;--accent:#e8572a;--accent2:#2a7ae8;--text:#1a1a1a;--muted:#7a7a7a;--border:#e8e4dc;--green:#2db37a;--tag-bg:#f0ede6;--gold:#f5a623;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* AUTH */
+.auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;}
+.auth-box{background:var(--card);border-radius:24px;padding:2.5rem;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,.09);}
+.auth-logo{font-family:'DM Serif Display',serif;font-size:2rem;margin-bottom:.2rem;}
+.auth-logo span{color:var(--accent);}
+.auth-tagline{color:var(--muted);font-size:.88rem;margin-bottom:1.75rem;}
+.auth-tabs{display:flex;background:var(--bg);border-radius:12px;padding:.22rem;margin-bottom:1.4rem;gap:.22rem;}
+.auth-tab{flex:1;padding:.5rem;border-radius:9px;border:none;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.83rem;cursor:pointer;background:none;color:var(--muted);transition:all .2s;}
+.auth-tab.active{background:var(--card);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.auth-form{display:flex;flex-direction:column;gap:.8rem;}
+.auth-input{padding:.72rem 1rem;border:1.5px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;background:var(--bg);}
+.auth-input:focus{border-color:var(--accent2);background:#fff;}
+.auth-btn{padding:.82rem;border-radius:12px;border:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.92rem;cursor:pointer;transition:all .2s;}
+.auth-btn-primary{background:var(--accent);color:#fff;}
+.auth-btn-primary:hover{background:#c94820;}
+.auth-error{color:var(--accent);font-size:.8rem;min-height:1em;text-align:center;}
+.auth-divider{display:flex;align-items:center;gap:.7rem;color:var(--muted);font-size:.78rem;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* TOAST */
+.toast{position:fixed;top:1rem;left:50%;transform:translateX(-50%) translateY(-120px);background:var(--green);color:#fff;padding:.9rem 1.75rem;border-radius:999px;font-weight:600;font-size:.9rem;z-index:9999;transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 24px rgba(0,0,0,.2);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* NAV */
+nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:100;}
+.logo{font-family:'DM Serif Display',serif;font-size:1.4rem;}
+.logo span{color:var(--accent);}
+.nav-right{display:flex;align-items:center;gap:.45rem;}
+.nav-tabs{display:flex;gap:.18rem;}
+.nav-tab{padding:.36rem .88rem;border-radius:999px;cursor:pointer;font-size:.8rem;font-weight:500;border:none;background:none;color:var(--muted);transition:all .2s;font-family:'DM Sans',sans-serif;}
+.nav-tab.active{background:var(--text);color:#fff;}
+.nav-tab:hover:not(.active){background:var(--tag-bg);color:var(--text);}
+.balance-chip{display:flex;align-items:center;gap:.35rem;padding:.3rem .75rem;border-radius:999px;background:#fffbec;border:1.5px solid #f5d87a;font-size:.8rem;font-weight:600;color:#8a6500;cursor:pointer;}
+.user-chip{display:flex;align-items:center;gap:.4rem;padding:.28rem .75rem .28rem .38rem;border-radius:999px;background:var(--tag-bg);font-size:.8rem;font-weight:500;color:var(--text);}
+.user-avatar{width:23px;height:23px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0;}
+.logout-btn{padding:.32rem .75rem;border-radius:999px;border:1.5px solid var(--border);background:none;font-family:'DM Sans',sans-serif;font-size:.76rem;cursor:pointer;color:var(--muted);}
+.logout-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* PAGES */
+.page{display:none;padding:1.75rem;max-width:1100px;margin:0 auto;}
+.page.active{display:block;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* HERO */
+.hero{background:var(--text);color:#fff;border-radius:18px;padding:2rem;margin-bottom:1.4rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+.hero h1{font-family:'DM Serif Display',serif;font-size:1.85rem;margin-bottom:.3rem;}
+.hero p{color:#aaa;font-size:.88rem;}
+.hero-emoji{font-size:3.5rem;}
+.date-badge{display:inline-block;background:var(--accent);color:#fff;font-size:.7rem;font-weight:600;padding:.2rem .68rem;border-radius:999px;margin-bottom:.65rem;letter-spacing:.05em;text-transform:uppercase;}
+
+/* CUTOFF */
+.cutoff-banner{background:#fff3ec;border:1px solid #f5c9b3;border-radius:12px;padding:.68rem 1rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.7rem;font-size:.84rem;color:#b84a1a;}
+.cutoff-banner.closed{background:#fef0f0;border-color:#f5b3b3;color:#a01a1a;}
+
+/* RECOMMENDATIONS */
+.rec-strip{margin-bottom:1.3rem;}
+.rec-label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.6rem;}
+.rec-cards{display:flex;gap:.75rem;overflow-x:auto;padding-bottom:.3rem;}
+.rec-card{background:var(--card);border:1.5px solid var(--gold);border-radius:14px;padding:.8rem;min-width:150px;cursor:pointer;flex-shrink:0;transition:transform .2s;}
+.rec-card:hover{transform:translateY(-2px);}
+.rec-emoji{font-size:2rem;display:block;margin-bottom:.3rem;}
+.rec-name{font-weight:600;font-size:.82rem;margin-bottom:.15rem;}
+.rec-price{color:var(--accent);font-size:.78rem;font-weight:600;}
+
+/* FILTER */
+.filter-bar{display:flex;gap:.6rem;margin-bottom:1.35rem;flex-wrap:wrap;align-items:center;}
+.search-wrap{position:relative;flex:1;min-width:155px;}
+.search-wrap input{width:100%;padding:.56rem 1rem .56rem 2.2rem;border:1.5px solid var(--border);border-radius:999px;font-family:'DM Sans',sans-serif;font-size:.84rem;outline:none;background:var(--card);}
+.search-wrap input:focus{border-color:var(--accent2);}
+.search-icon{position:absolute;left:.78rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.84rem;pointer-events:none;}
+.filter-chip{padding:.36rem .82rem;border-radius:999px;border:1.5px solid var(--border);background:var(--card);font-size:.75rem;font-weight:500;cursor:pointer;color:var(--muted);transition:all .2s;font-family:'DM Sans',sans-serif;}
+.filter-chip.active{background:var(--text);color:#fff;border-color:var(--text);}
+
+/* MENU GRID */
+.section-title{font-family:'DM Serif Display',serif;font-size:1.4rem;margin-bottom:1.1rem;}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.1rem;}
+.menu-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:transform .2s,box-shadow .2s;position:relative;}
+.menu-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.07);}
+.menu-card.closed-card{opacity:.5;pointer-events:none;}
+.card-img{height:120px;background:var(--tag-bg);display:flex;align-items:center;justify-content:center;font-size:3rem;}
+.card-body{padding:.88rem 1rem 1rem;}
+.card-name{font-weight:600;font-size:.92rem;margin-bottom:.18rem;}
+.card-price{color:var(--accent);font-weight:700;font-size:.98rem;margin-bottom:.22rem;}
+.card-rating{font-size:.73rem;color:var(--muted);margin-bottom:.35rem;}
+.card-prep{font-size:.73rem;color:var(--accent2);margin-bottom:.38rem;font-weight:500;}
+.card-desc{color:var(--muted);font-size:.77rem;line-height:1.5;margin-bottom:.65rem;}
+.ingredients-tags{display:flex;flex-wrap:wrap;gap:.26rem;margin-bottom:.75rem;}
+.tag{background:var(--tag-bg);color:var(--muted);font-size:.67rem;padding:.17rem .48rem;border-radius:999px;}
+.tag.allergen{background:#fef3ec;color:#c84e1a;}
+.allergen-badge{position:absolute;top:9px;left:9px;background:#e8572a;color:#fff;font-size:.64rem;font-weight:700;padding:.14rem .48rem;border-radius:999px;}
+
+/* CART CONTROLS on card */
+.card-cart-row{display:flex;align-items:center;justify-content:space-between;margin-top:.1rem;}
+.qty-ctrl{display:flex;align-items:center;gap:.45rem;}
+.qty-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--text);transition:all .2s;line-height:1;}
+.qty-btn:hover{border-color:var(--accent);color:var(--accent);}
+.qty-btn.add{background:var(--accent);border-color:var(--accent);color:#fff;}
+.qty-btn.add:hover{background:#c94820;}
+.qty-num{font-weight:700;font-size:.9rem;min-width:18px;text-align:center;}
+.in-cart-badge{position:absolute;top:9px;right:9px;background:var(--accent);color:#fff;font-size:.67rem;font-weight:700;padding:.17rem .52rem;border-radius:999px;}
+
+/* CART FAB */
+.cart-fab{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--accent);color:#fff;border:none;border-radius:999px;padding:.85rem 1.5rem;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;box-shadow:0 6px 24px rgba(232,87,42,.4);z-index:200;display:flex;align-items:center;gap:.6rem;transition:all .3s;opacity:0;pointer-events:none;transform:translateY(20px);}
+.cart-fab.show{opacity:1;pointer-events:all;transform:translateY(0);}
+.cart-fab-badge{background:#fff;color:var(--accent);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;}
+
+/* CART DRAWER */
+.cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:400;opacity:0;pointer-events:none;transition:opacity .25s;}
+.cart-overlay.show{opacity:1;pointer-events:all;}
+.cart-drawer{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:540px;background:var(--card);border-radius:20px 20px 0 0;padding:1.5rem 1.5rem 2rem;z-index:401;transition:transform .35s cubic-bezier(.34,1.2,.64,1);max-height:85vh;overflow-y:auto;}
+.cart-overlay.show .cart-drawer{transform:translateX(-50%) translateY(0);}
+.cart-handle{width:40px;height:4px;background:var(--border);border-radius:999px;margin:0 auto 1.25rem;}
+.cart-title{font-family:'DM Serif Display',serif;font-size:1.35rem;margin-bottom:1.1rem;}
+.cart-item{display:flex;align-items:center;gap:.9rem;padding:.7rem 0;border-bottom:1px solid var(--border);}
+.cart-item:last-of-type{border-bottom:none;}
+.cart-item-emoji{font-size:1.6rem;}
+.cart-item-info{flex:1;}
+.cart-item-name{font-weight:600;font-size:.9rem;}
+.cart-item-price{color:var(--accent);font-size:.8rem;margin-top:.1rem;}
+.cart-qty{display:flex;align-items:center;gap:.4rem;}
+.cqty-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:none;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--text);}
+.cqty-btn:hover{border-color:var(--accent);color:var(--accent);}
+.cqty-num{font-weight:700;font-size:.88rem;min-width:16px;text-align:center;}
+.cart-remove{background:none;border:none;cursor:pointer;font-size:.9rem;color:var(--muted);padding:.2rem;}
+.cart-remove:hover{color:var(--accent);}
+.cart-total-row{display:flex;justify-content:space-between;align-items:center;padding:1rem 0 .75rem;border-top:2px solid var(--border);margin-top:.5rem;}
+.cart-total-label{font-weight:700;font-size:1rem;}
+.cart-total-amt{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--accent);}
+.cart-balance-row{display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted);margin-bottom:1rem;}
+.cart-balance-row .insufficient{color:var(--accent);font-weight:600;}
+
+/* BUTTONS */
+.btn{padding:.56rem 1.25rem;border-radius:999px;border:none;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;cursor:pointer;transition:all .2s;}
+.btn-accent{background:var(--accent);color:#fff;}
+.btn-accent:hover{background:#c94820;}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--text);}
+.btn-outline:hover{border-color:var(--text);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:#259c68;}
+.btn-blue{background:var(--accent2);color:#fff;}
+.btn-blue:hover{background:#1a5ec4;}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.42);display:flex;align-items:center;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal-overlay.show{opacity:1;pointer-events:all;}
+.modal{background:#fff;border-radius:20px;padding:1.8rem;max-width:440px;width:90%;transform:scale(.96);transition:transform .25s;max-height:90vh;overflow-y:auto;}
+.modal-overlay.show .modal{transform:scale(1);}
+.modal h2{font-family:'DM Serif Display',serif;font-size:1.32rem;margin-bottom:.42rem;}
+.modal p{color:var(--muted);font-size:.87rem;margin-bottom:1.35rem;}
+.modal-btns{display:flex;gap:.65rem;}
+.order-summary-row{display:flex;justify-content:space-between;font-size:.87rem;padding:.22rem 0;}
+.order-summary-row.total{font-weight:700;border-top:1px solid var(--border);margin-top:.42rem;padding-top:.65rem;font-size:.95rem;}
+
+/* STAR */
+.star-row{display:flex;gap:.42rem;justify-content:center;margin:1rem 0 1.35rem;}
+.star-row{cursor:pointer;}
+.star-btn{font-size:1.85rem;background:none;border:none;cursor:pointer;transition:transform .15s, filter .1s;line-height:1;padding:.1rem;}
+.star-btn:hover{transform:scale(1.25);filter:brightness(1.3);}
+.star-btn:active{transform:scale(1.1);}
+
+/* TICKET */
+.ticket{background:#fff;border-radius:20px;padding:2.2rem;max-width:420px;margin:2.5rem auto;text-align:center;border:2px dashed var(--border);animation:fadeUp .4s ease;}
+.ticket h2{font-family:'DM Serif Display',serif;font-size:1.6rem;margin-bottom:.4rem;}
+.ticket p{color:var(--muted);margin-bottom:1.25rem;font-size:.88rem;}
+.ticket-num{font-family:'DM Serif Display',serif;font-size:3.5rem;color:var(--accent);background:var(--tag-bg);border-radius:14px;padding:.85rem 1.7rem;display:inline-block;margin-bottom:1.25rem;letter-spacing:.1em;}
+.ticket-item-list{text-align:left;background:var(--bg);border-radius:12px;padding:.8rem 1rem;margin-bottom:.9rem;}
+.ticket-item-line{font-size:.83rem;padding:.22rem 0;display:flex;justify-content:space-between;}
+.ticket-item-line.tl-total{font-weight:700;border-top:1px solid var(--border);margin-top:.3rem;padding-top:.45rem;}
+.ticket-detail{font-size:.82rem;color:var(--muted);margin-bottom:.2rem;}
+.ticket-detail strong{color:var(--text);}
+.ticket-prep{background:#e8f4ff;border-radius:10px;padding:.6rem 1rem;margin:.9rem 0;font-size:.83rem;color:var(--accent2);font-weight:500;}
+#qr-container{margin:1rem auto;display:flex;justify-content:center;}
+
+/* QUEUE */
+.queue-hero{background:var(--text);color:#fff;border-radius:18px;padding:1.75rem;margin-bottom:1.25rem;text-align:center;}
+.queue-hero h1{font-family:'DM Serif Display',serif;font-size:1.75rem;margin-bottom:.3rem;}
+.queue-hero p{color:#aaa;font-size:.85rem;}
+.queue-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.85rem;}
+.queue-card{border-radius:14px;padding:1.1rem;display:flex;align-items:center;gap:.85rem;border:1.5px solid var(--border);}
+.queue-card.ready{background:#e6f7ef;border-color:#9ddfc0;}
+.queue-card.preparing{background:#fff8ec;border-color:#f5d87a;}
+.queue-num{font-family:'DM Serif Display',serif;font-size:1.75rem;font-weight:700;min-width:50px;}
+.queue-num.ready{color:var(--green);}
+.queue-num.preparing{color:var(--gold);}
+.queue-status{font-size:.75rem;font-weight:600;margin-top:.18rem;}
+.queue-status.ready{color:var(--green);}
+.queue-status.preparing{color:#b8860b;}
+.queue-empty{text-align:center;padding:3rem;color:var(--muted);}
+
+/* PROFILE */
+.profile-hero{background:var(--text);color:#fff;border-radius:18px;padding:2rem;margin-bottom:1.4rem;display:flex;align-items:center;gap:1.4rem;}
+.profile-big-avatar{width:60px;height:60px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;flex-shrink:0;}
+.profile-hero h2{font-family:'DM Serif Display',serif;font-size:1.55rem;}
+.profile-hero p{color:#aaa;font-size:.86rem;margin-top:.18rem;}
+.profile-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin-bottom:1.4rem;}
+@media(max-width:600px){.profile-stats{grid-template-columns:repeat(2,1fr);}}
+.pstat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.9rem;text-align:center;}
+.pstat-num{font-family:'DM Serif Display',serif;font-size:1.75rem;color:var(--accent);}
+.pstat-label{font-size:.7rem;color:var(--muted);margin-top:.12rem;}
+.profile-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.35rem;margin-bottom:.9rem;}
+.profile-card h3{font-weight:600;font-size:.93rem;margin-bottom:.95rem;}
+.profile-form-row{display:flex;gap:.55rem;margin-bottom:.7rem;}
+.profile-form-row input{flex:1;padding:.6rem .88rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;background:var(--bg);}
+.profile-form-row input:focus{border-color:var(--accent2);background:#fff;}
+.history-item{display:flex;align-items:center;gap:.75rem;padding:.52rem 0;border-bottom:1px solid var(--border);font-size:.84rem;}
+.history-item:last-child{border-bottom:none;}
+
+/* ADMIN */
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.7rem;}
+@media(max-width:680px){.admin-grid{grid-template-columns:1fr;}}
+.admin-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.35rem;margin-bottom:.9rem;}
+.admin-card h3{font-weight:600;margin-bottom:1.1rem;font-size:.93rem;}
+.form-group{margin-bottom:.88rem;}
+.form-label{display:block;font-size:.75rem;font-weight:600;color:var(--muted);margin-bottom:.28rem;text-transform:uppercase;letter-spacing:.05em;}
+.form-input{width:100%;padding:.6rem .86rem;border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;background:var(--bg);}
+.form-input:focus{border-color:var(--accent2);background:#fff;}
+.form-row{display:flex;gap:.62rem;}
+.form-row .form-group{flex:1;}
+.admin-item{display:flex;align-items:center;gap:.85rem;padding:.68rem;border-radius:10px;border:1px solid var(--border);margin-bottom:.42rem;background:var(--bg);}
+.admin-item-emoji{font-size:1.35rem;}
+.admin-item-info{flex:1;}
+.admin-item-name{font-weight:600;font-size:.86rem;}
+.admin-item-sub{color:var(--accent);font-size:.76rem;}
+.delete-btn{background:none;border:none;cursor:pointer;font-size:1rem;color:var(--muted);}
+.delete-btn:hover{color:var(--accent);}
+.stat-row{display:flex;gap:.82rem;margin-bottom:1.35rem;flex-wrap:wrap;}
+.stat-box{flex:1;min-width:80px;background:var(--bg);border-radius:12px;padding:.85rem;text-align:center;}
+.stat-num{font-family:'DM Serif Display',serif;font-size:1.85rem;color:var(--accent);}
+.stat-label{font-size:.7rem;color:var(--muted);}
+.order-list-item{display:flex;align-items:flex-start;justify-content:space-between;padding:.6rem .68rem;border-radius:8px;background:var(--bg);margin-bottom:.36rem;font-size:.82rem;gap:.5rem;}
+.order-list-items{font-size:.75rem;color:var(--muted);margin-top:.18rem;}
+.status-badge{font-size:.67rem;padding:.17rem .55rem;border-radius:999px;font-weight:600;white-space:nowrap;}
+.status-pending{background:#fef3ec;color:#c84e1a;}
+.status-ready{background:#e6f7ef;color:#1a7a4a;}
+.status-cancelled{background:#f0f0f0;color:#888;}
+.mark-ready{background:none;border:1px solid var(--border);border-radius:999px;font-size:.67rem;padding:.11rem .46rem;cursor:pointer;color:var(--muted);white-space:nowrap;}
+.mark-ready:hover{border-color:var(--green);color:var(--green);}
+.cutoff-row{display:flex;align-items:center;gap:.88rem;flex-wrap:wrap;}
+.cutoff-toggle{position:relative;display:inline-block;width:42px;height:23px;}
+.cutoff-toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:999px;transition:.3s;}
+.toggle-slider:before{content:'';position:absolute;width:17px;height:17px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
+.cutoff-toggle input:checked+.toggle-slider{background:var(--green);}
+.cutoff-toggle input:checked+.toggle-slider:before{transform:translateX(19px);}
+
+/* LOCK */
+.lock-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;text-align:center;}
+.lock-icon{font-size:3rem;margin-bottom:.88rem;}
+.lock-screen h2{font-family:'DM Serif Display',serif;font-size:1.6rem;margin-bottom:.42rem;}
+.lock-screen p{color:var(--muted);font-size:.86rem;margin-bottom:1.5rem;}
+.lock-input-wrap{display:flex;gap:.65rem;width:100%;max-width:310px;}
+.lock-input{flex:1;padding:.66rem 1rem;border:1.5px solid var(--border);border-radius:999px;font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;text-align:center;letter-spacing:.12em;}
+.lock-input:focus{border-color:var(--accent2);}
+.lock-error{color:var(--accent);font-size:.78rem;margin-top:.65rem;min-height:1.1em;}
+.a-logout-btn{background:none;border:none;font-size:.75rem;color:var(--muted);cursor:pointer;margin-left:.5rem;padding:.26rem .68rem;border-radius:999px;font-family:'DM Sans',sans-serif;}
+.a-logout-btn:hover{background:var(--tag-bg);color:var(--text);}
+
+/* WALLET */
+.balance-display{background:linear-gradient(135deg,#1a1a1a,#333);color:#fff;border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;}
+.balance-display .amount{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--gold);}
+.balance-display .blabel{font-size:.75rem;color:#aaa;margin-top:.15rem;}
+.topup-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;}
+.topup-btn{padding:.4rem .9rem;border-radius:999px;border:1.5px solid var(--gold);background:none;color:#8a6500;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.topup-btn:hover{background:#fffbec;}
+
+.anomaly-item{padding:.5rem .75rem;background:#fff8ec;border:1px solid #f5d87a;border-radius:8px;font-size:.8rem;margin-bottom:.4rem;color:#8a6500;}
+.status-cancelled{background:#f0f0f0;color:#888;}
+.event-entry{padding:.2rem 0;border-bottom:1px solid #2a2a2a;}
+.event-entry:last-child{border-bottom:none;}
+.ev-ORDER_CREATED{color:#7ec8e3;}
+.ev-ORDER_READY{color:#7edb9a;}
+.ev-ORDER_CANCELLED{color:#f5a623;}
+.ev-AUTO_CLOSE{color:#e8572a;}
+.ev-AUTO_OPEN{color:#2db37a;}
+.ev-LOGIN{color:#c9a7f5;}
+
+@media print{
+  body{background:#fff;}
+  nav,.cart-fab,.cart-overlay,.modal-overlay,.toast,.page:not(#page-admin),.lock-screen,.admin-card:not(#print-section){display:none!important;}
+  #page-admin{display:block!important;padding:0;}#admin-content{display:block!important;}
+  .stat-row,.admin-grid,.cutoff-row,.a-logout-btn,.btn,.no-print{display:none!important;}
+  .print-header{display:block!important;}
+}
+.print-header{display:none;text-align:center;margin-bottom:1.3rem;padding-bottom:.88rem;border-bottom:2px solid #000;}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- AUTH -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">Lunch<span>Line</span></div>
+    <div class="auth-tagline">Skip the line. Order smarter.</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login',this)">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup',this)">Create Account</button>
+    </div>
+    <div id="auth-login" class="auth-form">
+      <input class="auth-input" id="login-user" placeholder="Username"/>
+      <input class="auth-input" id="login-pass" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div class="auth-error" id="login-error"></div>
+      <button class="auth-btn auth-btn-primary" onclick="doLogin()">Sign In →</button>
+      <div class="auth-divider">or</div>
+      <button class="auth-btn" style="background:var(--tag-bg);color:var(--text)" onclick="doAdminLogin()">⚙️ Sign in as Admin</button>
+    </div>
+    <div id="auth-signup" class="auth-form" style="display:none">
+      <input class="auth-input" id="signup-name" placeholder="Full name"/>
+      <input class="auth-input" id="signup-user" placeholder="Choose a username"/>
+      <input class="auth-input" id="signup-grade" placeholder="Grade / Group (e.g. 3A)"/>
+      <input class="auth-input" id="signup-pass" type="password" placeholder="Choose a password"/>
+      <input class="auth-input" id="signup-pass2" type="password" placeholder="Confirm password" onkeydown="if(event.key==='Enter')doSignup()"/>
+      <div class="auth-error" id="signup-error"></div>
+      <button class="auth-btn auth-btn-primary" onclick="doSignup()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+<nav>
+  <div class="logo">Lunch<span>Line</span></div>
+  <div class="nav-right">
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('menu',this)">🍽 Menu</button>
+      <button class="nav-tab" onclick="showPage('orders',this)">📋 My Orders</button>
+      <button class="nav-tab" onclick="showPage('queue',this)">📺 Queue</button>
+      <button class="nav-tab" onclick="showPage('profile',this)">👤 Profile</button>
+      <button class="nav-tab" id="admin-nav-btn" onclick="adminGate(this)" style="display:none">⚙️ Admin</button>
+      <button class="nav-tab" id="debug-nav-btn" onclick="adminGate2(this)" style="display:none">🐛 Debugger</button>
+    </div>
+    <div class="balance-chip" id="balance-chip" onclick="openWallet()">💳 <span id="nav-balance">$0</span></div>
+    <div class="user-chip"><div class="user-avatar" id="nav-avatar"></div><span id="nav-username"></span></div>
+    <button class="logout-btn" onclick="doLogout()">Log out</button>
+  </div>
+</nav>
+
+<!-- MENU -->
+<div class="page active" id="page-menu">
+  <div class="hero">
+    <div><div class="date-badge" id="today-date"></div><h1 id="hero-greeting"></h1><p>Add items to your cart, then checkout!</p></div>
+    <div class="hero-emoji">🛒</div>
+  </div>
+  <div class="cutoff-banner" id="cutoff-banner" style="display:none"></div>
+  <div id="rec-strip" style="display:none" class="rec-strip">
+    <div class="rec-label">🧠 Recommended for you</div>
+    <div class="rec-cards" id="rec-cards"></div>
+  </div>
+  <div class="filter-bar">
+    <div class="search-wrap"><span class="search-icon">🔍</span><input type="text" id="search-input" placeholder="Search dishes or ingredients..." oninput="renderMenu()"/></div>
+    <button class="filter-chip active" onclick="setFilter('all',this)">All</button>
+    <button class="filter-chip" onclick="setFilter('gluten-free',this)">Gluten-free</button>
+    <button class="filter-chip" onclick="setFilter('dairy-free',this)">Dairy-free</button>
+    <button class="filter-chip" onclick="setFilter('low',this)">Under $70</button>
+    <button class="filter-chip" onclick="setFilter('top',this)">⭐ Top rated</button>
+  </div>
+  <div class="menu-grid" id="menu-grid"></div>
+</div>
+
+<!-- MY ORDERS -->
+<div class="page" id="page-orders">
+  <div class="section-title">My Orders</div>
+  <div id="orders-content"></div>
+</div>
+
+<!-- QUEUE -->
+<div class="page" id="page-queue">
+  <div class="queue-hero"><h1>📺 Live Order Queue</h1><p>Real-time status of all orders today</p></div>
+  <div id="queue-content"></div>
+</div>
+
+<!-- DEBUGGER PAGE -->
+<div class="page" id="page-debug">
+  <div class="lock-screen" id="debug-lock" style="min-height:40vh">
+    <div class="lock-icon">🐛</div><h2>Debugger</h2><p>Admin only.</p>
+    <div class="lock-input-wrap"><input class="lock-input" id="debug-pw" type="password" placeholder="Admin password" onkeydown="if(event.key==='Enter')checkDebugPw()"/><button class="btn btn-accent" onclick="checkDebugPw()">Enter</button></div>
+    <div class="lock-error" id="debug-pw-error"></div>
+  </div>
+  <div id="debug-content" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem;flex-wrap:wrap;gap:.75rem">
+      <div class="section-title" style="margin-bottom:0">🐛 Time Travel Debugger</div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button class="btn btn-accent" id="replay-btn" onclick="startReplay()">▶ Replay</button>
+        <button class="btn btn-outline" onclick="pauseReplay()">⏸ Pause</button>
+        <button class="btn btn-outline" onclick="stopReplay()">⏹ Stop</button>
+        <button class="btn btn-outline" style="border-color:#f5b3b3;color:#a01a1a" onclick="clearEventLog()">🗑 Clear Log</button>
+      </div>
+    </div>
+    <div style="background:#1a1a1a;border-radius:16px;padding:1.25rem;margin-bottom:1.25rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+        <span style="color:#aaa;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Event Log</span>
+        <span id="event-count" style="color:#e8572a;font-size:.8rem;font-weight:700"></span>
+      </div>
+      <div id="event-log-display" style="max-height:320px;overflow-y:auto;font-family:monospace;font-size:.78rem;color:#e0e0e0;line-height:1.7"></div>
+    </div>
+    <div class="admin-card">
+      <h3>⚙️ Auto-Chaos Settings</h3>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.75rem">
+        <label class="cutoff-toggle"><input type="checkbox" id="auto-close-toggle" onchange="saveAutoClose()"/><span class="toggle-slider"></span></label>
+        <span style="font-size:.88rem">Auto-close when pending orders exceed</span>
+        <input class="form-input" type="number" id="auto-close-limit" value="20" min="5" max="100" style="width:80px" onchange="saveAutoClose()"/>
+        <span style="font-size:.88rem">orders</span>
+      </div>
+      <p style="font-size:.78rem;color:var(--muted)">Ordering auto-closes when overloaded and re-opens when load drops below half the limit.</p>
+    </div>
+    <div class="admin-card">
+      <h3>⚠️ Anomaly Alerts</h3>
+      <div id="anomaly-box"><div style="color:var(--muted);font-size:.83rem">No anomalies detected yet.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="page" id="page-profile"><div id="profile-content"></div></div>
+
+<!-- ADMIN -->
+<div class="page" id="page-admin">
+  <div class="lock-screen" id="admin-lock">
+    <div class="lock-icon">🔒</div><h2>Admin Access Only</h2><p>Enter the admin password to continue.</p>
+    <div class="lock-input-wrap"><input class="lock-input" id="admin-pw" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()"/><button class="btn btn-accent" onclick="checkPw()">Enter</button></div>
+    <div class="lock-error" id="pw-error"></div>
+  </div>
+  <div id="admin-content" style="display:none">
+    <div style="display:flex;align-items:center;margin-bottom:1.35rem"><div class="section-title" style="margin-bottom:0">Admin Panel</div><button class="a-logout-btn" onclick="lockAdmin()">🔓 Lock</button></div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Orders</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-pending">0</div><div class="stat-label">Pending</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-ready">0</div><div class="stat-label">Ready</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-users">0</div><div class="stat-label">Users</div></div>
+    </div>
+    <div class="admin-card">
+      <h3>⏰ Order Cutoff Time</h3>
+      <div class="cutoff-row">
+        <label class="cutoff-toggle"><input type="checkbox" id="cutoff-enabled" onchange="saveCutoff()"/><span class="toggle-slider"></span></label>
+        <span style="font-size:.87rem">Enable cutoff</span>
+        <input class="form-input" type="time" id="cutoff-time" value="10:00" onchange="saveCutoff()" style="width:120px"/>
+        <span id="cutoff-status" style="font-size:.82rem;color:var(--muted)"></span>
+      </div>
+    </div>
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h3>➕ Add New Dish</h3>
+        <div class="form-group"><label class="form-label">Dish Name</label><input class="form-input" id="new-name" placeholder="e.g. Pollo a la plancha"/></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Price (MXN)</label><input class="form-input" id="new-price" type="number" placeholder="75"/></div>
+          <div class="form-group"><label class="form-label">Prep (min)</label><input class="form-input" id="new-prep" type="number" placeholder="8"/></div>
+          <div class="form-group"><label class="form-label">Emoji</label><input class="form-input" id="new-emoji" placeholder="🍗" maxlength="2"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="new-desc" placeholder="Short description..."/></div>
+        <div class="form-group"><label class="form-label">Ingredients (comma separated)</label><input class="form-input" id="new-ingredients" placeholder="pollo, arroz, tomate"/></div>
+        <div class="form-group"><label class="form-label">Allergens (comma separated)</label><input class="form-input" id="new-allergens" placeholder="gluten, lacteos"/></div>
+        <button class="btn btn-accent" onclick="addDish()" style="width:100%">Add to Menu</button>
+      </div>
+      <div class="admin-card"><h3>📋 Current Menu</h3><div id="admin-menu-list"></div></div>
+    </div>
+    <div class="admin-card" id="print-section">
+      <div class="print-header"><h2>LunchLine — Today's Orders</h2><p id="print-date-label"></p></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem" class="no-print">
+        <h3 style="margin:0">📦 Today's Orders</h3>
+        <button class="btn btn-blue" onclick="printOrders()">🖨️ Print</button>
+      </div>
+      <div id="admin-orders-list"></div>
+    </div>
+    <div class="admin-card"><h3>👥 Registered Users</h3><div id="admin-users-list"></div></div>
+  </div>
+</div>
+</div><!-- /app -->
+
+<!-- CART FAB -->
+<button class="cart-fab" id="cart-fab" onclick="openCart()">
+  🛒 View Cart <div class="cart-fab-badge" id="cart-count">0</div>
+</button>
+
+<!-- CART DRAWER -->
+<div class="cart-overlay" id="cart-overlay" onclick="handleCartOverlayClick(event)">
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-handle"></div>
+    <div class="cart-title">🛒 Your Cart</div>
+    <div id="cart-items"></div>
+    <div id="cart-footer"></div>
+  </div>
+</div>
+
+<!-- RATING MODAL -->
+<div class="modal-overlay" id="rating-modal" style="z-index:500">
+  <div class="modal" style="text-align:center">
+    <h2>How was your meal?</h2>
+    <p id="rating-dish-name" style="font-weight:600;color:var(--text)"></p>
+    <div class="star-row" id="star-row"></div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeRatingModal()" style="flex:1">Skip</button>
+      <button class="btn btn-accent" onclick="submitRating()" style="flex:1">Submit ⭐</button>
+    </div>
+  </div>
+</div>
+
+<!-- WALLET MODAL -->
+<div class="modal-overlay" id="wallet-modal">
+  <div class="modal">
+    <h2>💳 My Wallet</h2>
+    <p>Virtual credits for demo payments. Not real money.</p>
+    <div class="balance-display">
+      <div><div class="blabel">Available balance</div><div class="amount" id="wallet-amount"></div></div>
+      <span style="font-size:2rem">💰</span>
+    </div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:.6rem;font-weight:600">Top up credits:</div>
+    <div class="topup-row">
+      <button class="topup-btn" onclick="topUp(50)">+$50</button>
+      <button class="topup-btn" onclick="topUp(100)">+$100</button>
+      <button class="topup-btn" onclick="topUp(200)">+$200</button>
+      <button class="topup-btn" onclick="topUp(500)">+$500</button>
+    </div>
+    <p style="font-size:.75rem;color:var(--muted);margin-bottom:1.2rem">💡 New accounts start with $150 MXN in virtual credits.</p>
+    <button class="btn btn-outline" onclick="closeWallet()" style="width:100%">Close</button>
+  </div>
+</div>
+
+<script>
+// ══ HELPERS ══
+function mxn(p){return '$'+p+' MXN';}
+function stars(avg,count){if(!count)return '<span style="color:var(--muted)">No ratings yet</span>';var s='';for(var i=1;i<=5;i++)s+=i<=Math.round(avg)?'⭐':'☆';return s+' <span style="color:var(--muted)">('+count+')</span>';}
+function save(k,v){try{localStorage.setItem('ll_'+k,JSON.stringify(v));}catch(e){}}
+function load(k,d){try{var v=localStorage.getItem('ll_'+k);return v!==null?JSON.parse(v):d;}catch(e){return d;}}
+function initials(n){if(!n)return '?';var p=n.trim().split(' ');return(p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function logEvent(type,data){
+  var entry={type:type,data:data,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}),ts:Date.now()};
+  eventLog.push(entry);
+  if(eventLog.length>500) eventLog=eventLog.slice(-500);
+  save('eventLog',eventLog);
+  checkAnomalies(entry);
+  checkAutoClose();
+}
+
+// ── ANOMALY DETECTION ────────────────────────────────────────────────────────
+function checkAnomalies(lastEvent){
+  if(lastEvent.type!=='ORDER_CREATED') return;
+  var now=Date.now();
+  var recent=eventLog.filter(function(e){return e.type==='ORDER_CREATED'&&(now-e.ts)<60000;});
+  // Too many orders in last minute
+  if(recent.length>=8){
+    if(!window._anomalyOrderSpike){
+      window._anomalyOrderSpike=true;
+      showAdminAlert('⚠️ Alta demanda: '+recent.length+' pedidos en el último minuto.');
+      setTimeout(function(){window._anomalyOrderSpike=false;},60000);
+    }
+  }
+  // One user ordering too many times
+  var userOrders=allOrders.filter(function(o){return o.username===lastEvent.data.username;});
+  if(userOrders.length>=5){
+    showAdminAlert('⚠️ Usuario "'+lastEvent.data.student+'" tiene '+userOrders.length+' pedidos hoy.');
+  }
+}
+
+// ── AUTO-CHAOS CUTOFF ────────────────────────────────────────────────────────
+function checkAutoClose(){
+  if(!autoCloseEnabled) return;
+  var pending=allOrders.filter(function(o){return o.status==='pending';}).length;
+  var wasOpen=isOrderingOpen();
+  if(pending>=AUTO_CLOSE_LIMIT&&wasOpen){
+    // Force cutoff on
+    cutoff.enabled=true; cutoff.time='00:00'; save('cutoff',cutoff);
+    updateCutoffBanner(); renderMenu(); updateCartFab();
+    showAdminAlert('🔴 Auto-cierre activado: '+pending+' pedidos pendientes (límite: '+AUTO_CLOSE_LIMIT+').');
+    logEvent('AUTO_CLOSE',{pending:pending});
+  } else if(pending<Math.floor(AUTO_CLOSE_LIMIT/2)&&cutoff.time==='00:00'&&cutoff.enabled){
+    // Re-open when load drops below half threshold
+    cutoff.enabled=false; save('cutoff',cutoff);
+    updateCutoffBanner(); renderMenu(); updateCartFab();
+    showAdminAlert('✅ Auto-apertura: carga bajó a '+pending+' pedidos. Ordenar habilitado.');
+    logEvent('AUTO_OPEN',{pending:pending});
+  }
+}
+
+function showAdminAlert(msg){
+  if(currentUser==='ADMIN'){showToast(msg);}
+  // always log to admin panel if open
+  var box=document.getElementById('anomaly-box');
+  if(box){
+    var d=document.createElement('div');
+    d.className='anomaly-item';d.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' — '+msg;
+    box.insertBefore(d,box.firstChild);
+    if(box.children.length>20) box.removeChild(box.lastChild);
+  }
+}
+
+function hashPass(p){var h=0;for(var i=0;i<p.length;i++){h=((h<<5)-h)+p.charCodeAt(i);h|=0;}return h.toString(36);}
+
+// ══ STATE ══
+var DEFAULT_MENU=[
+  {id:1,name:"Grilled Chicken Bowl",price:85,prep:8,emoji:"🍗",desc:"Juicy grilled chicken with rice and roasted veggies.",ingredients:["chicken","rice","bell pepper","onion"],allergens:[],ratings:[],ratingSum:0},
+  {id:2,name:"Veggie Pasta",price:70,prep:6,emoji:"🍝",desc:"Penne with fresh tomato sauce and seasonal vegetables.",ingredients:["penne","tomato","zucchini","garlic","basil"],allergens:["gluten"],ratings:[],ratingSum:0},
+  {id:3,name:"Beef Burger",price:95,prep:10,emoji:"🍔",desc:"Classic beef patty with lettuce, tomato and pickles.",ingredients:["beef","bread","lettuce","tomato"],allergens:["gluten","dairy"],ratings:[],ratingSum:0},
+  {id:4,name:"Caesar Salad",price:60,prep:5,emoji:"🥗",desc:"Romaine lettuce, croutons, parmesan and Caesar dressing.",ingredients:["romaine","croutons","parmesan"],allergens:["gluten","dairy","egg"],ratings:[],ratingSum:0},
+  {id:5,name:"Fish Tacos",price:75,prep:7,emoji:"🌮",desc:"Crispy fish with cabbage slaw and lime crema.",ingredients:["fish","corn tortilla","cabbage","lime"],allergens:["fish","dairy"],ratings:[],ratingSum:0},
+  {id:6,name:"Margherita Pizza",price:80,prep:9,emoji:"🍕",desc:"Fresh tomato, mozzarella and basil on thin crust.",ingredients:["dough","tomato","mozzarella","basil"],allergens:["gluten","dairy"],ratings:[],ratingSum:0}
+];
+var menu=load('menu',DEFAULT_MENU);
+var allOrders=load('allOrders',[]);
+
+// Migrate old orders from previous format (single item → items array)
+allOrders = allOrders.map(function(o){
+  if(!o.items && o.item){
+    o.items = [{item: o.item, qty: 1}];
+    o.total = o.item.price;
+    delete o.item;
+  }
+  if(!o.items) o.items = [];
+  return o;
+});
+save('allOrders', allOrders);
+
+var cutoff=load('cutoff',{enabled:false,time:'10:00'});
+var users=load('users',{});
+var nextTicket=load('nextTicket',101);
+var eventLog=load('eventLog',[]);
+var AUTO_CLOSE_LIMIT=load('autoCloseLimit',20);
+var autoCloseEnabled=load('autoCloseEnabled',false);
+
+// CART: [{item, qty}]
+var cart=[];
+var currentUser=null, activeFilter='all';
+var pendingRatingOrderIdx=null, pendingRatingStar=0, adminUnlocked=false;
+var ADMIN_PASSWORD='admin123';
+var lastKnownReadyCt=0, toastTimer=null;
+
+var DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var NOW=new Date();
+var TODAY_STR=DAYS[NOW.getDay()]+', '+MONTHS[NOW.getMonth()]+' '+NOW.getDate();
+
+// ══ TOAST ══
+function showToast(msg){
+  var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  if(navigator.vibrate)navigator.vibrate([200,100,200]);
+  try{var ctx=new(window.AudioContext||window.webkitAudioContext)();var osc=ctx.createOscillator();var gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=880;gain.gain.setValueAtTime(0.3,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);osc.start();osc.stop(ctx.currentTime+0.4);}catch(e){}
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove('show');},4000);
+}
+
+// ══ AUTH ══
+function switchAuthTab(tab,btn){
+  document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('auth-login').style.cssText=tab==='login'?'display:flex;flex-direction:column':'display:none';
+  document.getElementById('auth-signup').style.cssText=tab==='signup'?'display:flex;flex-direction:column':'display:none';
+}
+function doLogin(){
+  var u=document.getElementById('login-user').value.trim().toLowerCase();
+  var p=document.getElementById('login-pass').value;
+  var err=document.getElementById('login-error');
+  if(!u||!p){err.textContent='Please fill in all fields.';return;}
+  if(!users[u]){err.textContent='Account not found. Please sign up.';return;}
+  if(users[u].passHash!==hashPass(p)){err.textContent='Incorrect password.';return;}
+  err.textContent='';launchApp(u);
+}
+function doAdminLogin(){openAdminLoginModal();}
+function openAdminLoginModal(){document.getElementById('admin-login-modal').classList.add('show');setTimeout(function(){document.getElementById('admin-login-pw').focus();},100);}
+function closeAdminLoginModal(){document.getElementById('admin-login-modal').classList.remove('show');document.getElementById('admin-login-error').textContent='';}
+function submitAdminLogin(){
+  var pw=document.getElementById('admin-login-pw').value;
+  var err=document.getElementById('admin-login-error');
+  if(!pw){err.textContent='Enter the admin password.';return;}
+  if(pw===ADMIN_PASSWORD){err.textContent='';document.getElementById('admin-login-pw').value='';closeAdminLoginModal();launchApp('ADMIN');}
+  else{err.textContent='Incorrect password.';document.getElementById('admin-login-pw').value='';document.getElementById('admin-login-pw').focus();}
+}
+function doSignup(){
+  var name=document.getElementById('signup-name').value.trim();
+  var u=document.getElementById('signup-user').value.trim().toLowerCase();
+  var grade=document.getElementById('signup-grade').value.trim();
+  var p=document.getElementById('signup-pass').value;
+  var p2=document.getElementById('signup-pass2').value;
+  var err=document.getElementById('signup-error');
+  if(!name||!u||!p){err.textContent='Name, username and password are required.';return;}
+  if(p!==p2){err.textContent='Passwords do not match.';return;}
+  if(p.length<4){err.textContent='Password must be at least 4 characters.';return;}
+  if(users[u]){err.textContent='Username already taken.';return;}
+  if(u==='admin'){err.textContent='Reserved username.';return;}
+  users[u]={name:name,grade:grade,passHash:hashPass(p),allergens:[],balance:150,joined:TODAY_STR};
+  save('users',users);launchApp(u);
+}
+function doLogout(){
+  currentUser=null;adminUnlocked=false;debugUnlocked=false;cart=[];
+  document.getElementById('debug-nav-btn').style.display='none';
+  document.getElementById('admin-nav-btn').style.display='none';
+  document.getElementById('app').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  ['login-user','login-pass'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('login-error').textContent='';
+  updateCartFab();
+}
+function launchApp(u){
+  currentUser=u;
+  var isAdmin=u==='ADMIN';
+  cart=[];debugUnlocked=false;
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('admin-nav-btn').style.display=isAdmin?'':'none';
+  document.getElementById('balance-chip').style.display=isAdmin?'none':'';
+  document.getElementById('nav-username').textContent=isAdmin?'Admin':users[u].name;
+  document.getElementById('nav-avatar').textContent=isAdmin?'⚙':initials(users[u].name);
+  document.getElementById('today-date').textContent=TODAY_STR;
+  document.getElementById('hero-greeting').textContent=isAdmin?'Welcome, Admin 👋':'Hey, '+users[u].name.split(' ')[0]+'! 👋';
+  document.getElementById('cutoff-enabled').checked=cutoff.enabled;
+  document.getElementById('cutoff-time').value=cutoff.time;
+  if(!isAdmin)updateBalanceDisplay();
+  showPage('menu',document.querySelectorAll('.nav-tab')[0]);
+  activeFilter='all';
+  document.getElementById('search-input').value='';
+  document.querySelectorAll('.filter-chip').forEach(function(c,i){c.classList.toggle('active',i===0);});
+  renderMenu();updateCutoffBanner();renderRecs();updateCartFab();
+  if(isAdmin){renderAdminMenu();renderAdminOrders();updateStats();showDebuggerIfAdmin();}
+  startOrderPolling();
+}
+
+// ══ CART ══════════════════════════════════
+function getCartQty(itemId){
+  var e=cart.find(function(c){return c.item.id===itemId;});
+  return e?e.qty:0;
+}
+function cartTotal(){return cart.reduce(function(s,e){return s+e.item.price*e.qty;},0);}
+function cartCount(){return cart.reduce(function(s,e){return s+e.qty;},0);}
+
+function addToCart(itemId){
+  if(!isOrderingOpen())return;
+  var item=menu.find(function(m){return m.id===itemId;});
+  if(!item)return;
+  var e=cart.find(function(c){return c.item.id===itemId;});
+  if(e)e.qty++;
+  else cart.push({item:JSON.parse(JSON.stringify(item)),qty:1});
+  updateCartFab();renderMenu();
+}
+function removeFromCart(itemId){
+  var e=cart.find(function(c){return c.item.id===itemId;});
+  if(!e)return;
+  e.qty--;
+  if(e.qty<=0)cart=cart.filter(function(c){return c.item.id!==itemId;});
+  updateCartFab();renderMenu();
+  if(document.getElementById('cart-overlay').classList.contains('show'))renderCartDrawer();
+}
+function removeCartItem(itemId){
+  cart=cart.filter(function(c){return c.item.id!==itemId;});
+  updateCartFab();renderMenu();renderCartDrawer();
+}
+function updateCartFab(){
+  var fab=document.getElementById('cart-fab');
+  var count=cartCount();
+  document.getElementById('cart-count').textContent=count;
+  if(count>0&&isOrderingOpen()){fab.classList.add('show');}else{fab.classList.remove('show');}
+}
+
+function openCart(){
+  renderCartDrawer();
+  document.getElementById('cart-overlay').classList.add('show');
+}
+function closeCart(){document.getElementById('cart-overlay').classList.remove('show');}
+function handleCartOverlayClick(e){if(e.target===document.getElementById('cart-overlay'))closeCart();}
+
+function renderCartDrawer(){
+  var ci=document.getElementById('cart-items');
+  var cf=document.getElementById('cart-footer');
+  if(!cart.length){ci.innerHTML='<div style="text-align:center;padding:2rem;color:var(--muted)">Your cart is empty 🛒</div>';cf.innerHTML='';return;}
+  ci.innerHTML=cart.map(function(e){
+    return '<div class="cart-item">'+
+      '<div class="cart-item-emoji">'+e.item.emoji+'</div>'+
+      '<div class="cart-item-info">'+
+        '<div class="cart-item-name">'+e.item.name+'</div>'+
+        '<div class="cart-item-price">'+mxn(e.item.price)+' × '+e.qty+' = '+mxn(e.item.price*e.qty)+'</div>'+
+      '</div>'+
+      '<div class="cart-qty">'+
+        '<button class="cqty-btn" onclick="removeFromCart('+e.item.id+')">−</button>'+
+        '<span class="cqty-num">'+e.qty+'</span>'+
+        '<button class="cqty-btn" onclick="addToCart('+e.item.id+')">+</button>'+
+      '</div>'+
+      '<button class="cart-remove" onclick="removeCartItem('+e.item.id+')" title="Remove">✕</button>'+
+    '</div>';
+  }).join('');
+
+  var total=cartTotal();
+  var bal=getUserBalance();
+  var canAfford=bal>=total;
+  cf.innerHTML=
+    '<div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-amt">'+mxn(total)+'</span></div>'+
+    '<div class="cart-balance-row"><span>Your balance:</span><span class="'+(canAfford?'':'insufficient')+'">'+mxn(bal)+'</span></div>'+
+    (!canAfford?'<div style="background:#fef0f0;border:1px solid #f5b3b3;border-radius:10px;padding:.6rem 1rem;margin-bottom:.9rem;font-size:.81rem;color:#a01a1a">⚠️ Insufficient balance. <span style="cursor:pointer;text-decoration:underline" onclick="closeCart();openWallet()">Top up your wallet →</span></div>':'')+
+    '<button class="btn btn-green" '+(canAfford?'':'disabled style="opacity:.5;cursor:not-allowed"')+' onclick="placeOrder()" style="width:100%;padding:.85rem;font-size:.95rem;'+(canAfford?'':'opacity:.5;cursor:not-allowed')+'">'+(canAfford?'💳 Pay '+mxn(total)+' & Place Order':'Insufficient Balance')+'</button>';
+}
+
+// ══ ORDER ══
+function placeOrder(){
+  if(!cart.length)return;
+  if(!isOrderingOpen()){alert('Ordering is closed.');return;}
+  var total=cartTotal();
+  var bal=getUserBalance();
+  if(bal<total){alert('Insufficient balance.');return;}
+  // Deduct
+  users[currentUser].balance=bal-total;
+  save('users',users);updateBalanceDisplay();
+  var ticket=nextTicket++;
+  var time=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  var uname=users[currentUser].name;
+  // Max prep time across items in cart
+  var maxPrep=Math.max.apply(null,cart.map(function(e){return getEstimatedWait(e.item.prep||8);}));
+  var orderItems=cart.map(function(e){return{item:JSON.parse(JSON.stringify(e.item)),qty:e.qty};});
+  var order={id:allOrders.length+1,ticket:ticket,username:currentUser,student:uname,items:orderItems,total:total,status:'pending',time:time,rated:false,prepMin:maxPrep};
+  allOrders.push(order);save('allOrders',allOrders);save('nextTicket',nextTicket);
+  logEvent('ORDER_CREATED',{ticket:order.ticket,username:currentUser,student:order.student,total:order.total});
+  cart=[];updateCartFab();closeCart();renderMenu();renderRecs();
+  showTicket(order);
+}
+
+// ══ TICKET ══
+function showTicket(order){
+  var itemLines=order.items.map(function(e){return '<div class="ticket-item-line"><span>'+e.item.emoji+' '+e.item.name+(e.qty>1?' ×'+e.qty:'')+'</span><span>'+mxn(e.item.price*e.qty)+'</span></div>';}).join('');
+  document.getElementById('orders-content').innerHTML=
+    '<div class="ticket">'+
+      '<div style="font-size:3rem;margin-bottom:.8rem">🎟️</div>'+
+      '<h2>Order Placed!</h2>'+
+      '<p>Show this ticket at the counter — no line needed.</p>'+
+      '<div class="ticket-num">#'+order.ticket+'</div>'+
+      '<div class="ticket-item-list">'+itemLines+'<div class="ticket-item-line tl-total"><span>Total</span><span>'+mxn(order.total)+'</span></div></div>'+
+      '<div class="ticket-detail">'+order.student+' · '+order.time+'</div>'+
+      '<div class="ticket-prep">⏳ Ready in approximately '+order.prepMin+' minutes</div>'+
+      '<div id="qr-container"></div>'+
+      '<div style="font-size:.72rem;color:var(--muted);margin-bottom:1rem">Scan QR to verify ticket</div>'+
+      '<button class="btn btn-outline" onclick="renderMyOrders()">View all my orders</button>'+
+    '</div>';
+  try{
+    new QRCode(document.getElementById('qr-container'),{
+      text:'LUNCHLINE|#'+order.ticket+'|'+order.student+'|'+order.items.map(function(e){return e.item.name+(e.qty>1?'x'+e.qty:'');}).join(',')+' |'+order.time,
+      width:140,height:140,colorDark:'#1a1a1a',colorLight:'#f7f5f0',correctLevel:QRCode.CorrectLevel.H
+    });
+  }catch(e){}
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('page-orders').classList.add('active');
+  document.querySelectorAll('.nav-tab')[1].classList.add('active');
+  lastKnownReadyCt=allOrders.filter(function(o){return o.username===currentUser&&o.status==='ready';}).length;
+}
+
+// ══ MY ORDERS ══
+function renderMyOrders(){
+  var c=document.getElementById('orders-content');
+  var mine=allOrders.filter(function(o){return o.username===currentUser;});
+  if(!mine.length){c.innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted)">No orders yet. Head to the menu! 🍽</div>';return;}
+  c.innerHTML=mine.slice().reverse().map(function(o){
+    var gi=allOrders.findIndex(function(x){return x.ticket===o.ticket;});
+    var itemSummary=o.items.map(function(e){return e.item.emoji+' '+e.item.name+(e.qty>1?' ×'+e.qty:'');}).join(' · ');
+    var rateBtn=(o.status==='ready'&&!o.rated)?'<button class="btn btn-outline" style="font-size:.72rem;padding:.27rem .72rem" onclick="openRatingModal('+gi+')">Rate ⭐</button>':(o.rated?'<span style="font-size:.72rem;color:var(--muted)">Rated ✓</span>':'');
+    var cancelBtn=(o.status==='pending')?'<button class="btn btn-outline" style="font-size:.72rem;padding:.27rem .72rem;border-color:#f5b3b3;color:#a01a1a" onclick="cancelOrder('+gi+')">✕ Cancel</button>':'';
+    return '<div class="admin-item">'+
+      '<div class="admin-item-emoji" style="font-size:1.5rem">🎟️</div>'+
+      '<div class="admin-item-info">'+
+        '<div class="admin-item-name">#'+o.ticket+' · '+mxn(o.total)+'</div>'+
+        '<div style="font-size:.73rem;color:var(--muted)">'+itemSummary+'</div>'+
+        '<div style="font-size:.73rem;color:var(--muted)">'+o.time+(o.status==='pending'?' · ⏳ ~'+o.prepMin+'min':'')+'</div>'+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem">'+
+        '<span class="status-badge '+(o.status==='ready'?'status-ready':'status-pending')+'">'+(o.status==='ready'?'✓ Ready':'Pending')+'</span>'+
+        rateBtn+cancelBtn+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function cancelOrder(idx){
+  allOrders=load('allOrders',allOrders);
+  var o=allOrders[idx];
+  if(!o||o.status!=='pending'){showToast('❌ Cannot cancel: order is already being prepared.');return;}
+  if(!confirm('Cancel order #'+o.ticket+'? Your balance will be refunded.')) return;
+  // Refund
+  if(users[o.username]){users[o.username].balance=(users[o.username].balance||0)+o.total;save('users',users);updateBalanceDisplay();}
+  allOrders[idx].status='cancelled';
+  save('allOrders',allOrders);
+  logEvent('ORDER_CANCELLED',{ticket:o.ticket,student:o.student,total:o.total});
+  showToast('✅ Order #'+o.ticket+' cancelled. '+mxn(o.total)+' refunded to your wallet.');
+  renderMyOrders(); updateStats();
+}
+
+// ══ PAGES ══
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('page-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='admin'){renderAdminMenu();renderAdminOrders();updateStats();}
+  if(name==='orders')renderMyOrders();
+  if(name==='profile')renderProfilePage();
+  if(name==='queue')renderQueue();
+}
+
+// ══ CUTOFF ══
+function isOrderingOpen(){if(!cutoff.enabled)return true;var p=cutoff.time.split(':');var cd=new Date();cd.setHours(+p[0],+p[1],0,0);return new Date()<cd;}
+function saveCutoff(){cutoff.enabled=document.getElementById('cutoff-enabled').checked;cutoff.time=document.getElementById('cutoff-time').value;save('cutoff',cutoff);updateCutoffBanner();renderMenu();updateCartFab();document.getElementById('cutoff-status').textContent=cutoff.enabled?(isOrderingOpen()?'✅ Open':'🔴 Closed'):'';}
+function updateCutoffBanner(){var b=document.getElementById('cutoff-banner');if(!cutoff.enabled){b.style.display='none';return;}b.style.display='flex';if(isOrderingOpen()){b.className='cutoff-banner';b.innerHTML='⏰ Orders close at <strong style="margin:0 .2rem">'+cutoff.time+'</strong>. Order before it\'s too late!';}else{b.className='cutoff-banner closed';b.innerHTML='🔴 <strong>Ordering is closed</strong> for today. Come back tomorrow!';}}
+
+// ══ PREP ESTIMATOR ══
+function getEstimatedWait(base){var pending=allOrders.filter(function(o){return o.status==='pending';}).length;return base+Math.floor(pending/2)*2;}
+
+// ══ RECS ══
+function renderRecs(){
+  if(!currentUser||currentUser==='ADMIN'){document.getElementById('rec-strip').style.display='none';return;}
+  var mine=allOrders.filter(function(o){return o.username===currentUser;});
+  if(!mine.length){document.getElementById('rec-strip').style.display='none';return;}
+  var orderedIds=[];mine.forEach(function(o){o.items.forEach(function(e){orderedIds.push(e.item.id);});});
+  var ua=users[currentUser].allergens||[];
+  var scored=menu.map(function(item){
+    if(ua.some(function(a){return item.allergens.indexOf(a)!==-1;}))return null;
+    var avg=item.ratings.length?item.ratingSum/item.ratings.length:3;
+    var recent=orderedIds.slice(-4).indexOf(item.id)!==-1;
+    return{item:item,score:avg+(recent?-2:1)};
+  }).filter(Boolean).sort(function(a,b){return b.score-a.score;}).slice(0,3);
+  if(!scored.length){document.getElementById('rec-strip').style.display='none';return;}
+  document.getElementById('rec-strip').style.display='block';
+  document.getElementById('rec-cards').innerHTML=scored.map(function(s){
+    return '<div class="rec-card" onclick="addToCart('+s.item.id+')"><span class="rec-emoji">'+s.item.emoji+'</span><div class="rec-name">'+s.item.name+'</div><div class="rec-price">'+mxn(s.item.price)+'</div><div style="font-size:.72rem;color:var(--muted);margin-top:.3rem">Tap to add to cart</div></div>';
+  }).join('');
+}
+
+// ══ FILTER ══
+function setFilter(f,btn){activeFilter=f;document.querySelectorAll('.filter-chip').forEach(function(c){c.classList.remove('active');});btn.classList.add('active');renderMenu();}
+function getFilteredMenu(){
+  var q=document.getElementById('search-input').value.trim().toLowerCase();
+  var ua=(currentUser&&currentUser!=='ADMIN'&&users[currentUser])?users[currentUser].allergens:[];
+  return menu.filter(function(item){
+    if(q){var h=item.name.toLowerCase()+' '+item.ingredients.join(' ').toLowerCase()+' '+item.desc.toLowerCase();if(h.indexOf(q)===-1)return false;}
+    if(activeFilter==='gluten-free'&&item.allergens.indexOf('gluten')!==-1)return false;
+    if(activeFilter==='dairy-free'&&item.allergens.indexOf('dairy')!==-1)return false;
+    if(activeFilter==='low'&&item.price>=70)return false;
+    if(activeFilter==='top'){var avg=item.ratings.length?item.ratingSum/item.ratings.length:0;if(avg<4)return false;}
+    return true;
+  });
+}
+
+// ══ MENU ══
+function renderMenu(){
+  var open=isOrderingOpen();
+  var filtered=getFilteredMenu();
+  var ua=(currentUser&&currentUser!=='ADMIN'&&users[currentUser])?users[currentUser].allergens:[];
+  if(!filtered.length){document.getElementById('menu-grid').innerHTML='<div class="no-results" style="text-align:center;padding:3rem;color:var(--muted)">No dishes match your search 🔍</div>';return;}
+  document.getElementById('menu-grid').innerHTML=filtered.map(function(item){
+    var avg=item.ratings.length?(item.ratingSum/item.ratings.length).toFixed(1):null;
+    var hasAllergen=ua.length&&item.allergens.some(function(a){return ua.indexOf(a)!==-1;});
+    var prepMin=getEstimatedWait(item.prep||8);
+    var qty=getCartQty(item.id);
+    var cartRow=open?
+      '<div class="card-cart-row">'+
+        (qty>0?
+          '<div class="qty-ctrl">'+
+            '<button class="qty-btn" onclick="event.stopPropagation();removeFromCart('+item.id+')">−</button>'+
+            '<span class="qty-num">'+qty+'</span>'+
+            '<button class="qty-btn" onclick="event.stopPropagation();addToCart('+item.id+')">+</button>'+
+          '</div>':
+          '<button class="qty-btn add" onclick="event.stopPropagation();addToCart('+item.id+')" style="width:auto;padding:0 .9rem;border-radius:999px;font-size:.8rem;">+ Add to cart</button>'
+        )+
+        (qty>0?'<span style="font-size:.78rem;color:var(--accent);font-weight:600">'+mxn(item.price*qty)+' in cart</span>':'')+
+      '</div>':'<div style="font-size:.78rem;color:var(--muted);margin-top:.3rem">Ordering closed</div>';
+    return '<div class="menu-card'+((!open)?'closed-card':'')+'" >'+
+      (qty>0?'<div class="in-cart-badge">'+qty+' in cart</div>':'')+
+      (hasAllergen?'<div class="allergen-badge">⚠ Allergen</div>':'')+
+      '<div class="card-img">'+item.emoji+'</div>'+
+      '<div class="card-body">'+
+        '<div class="card-name">'+item.name+'</div>'+
+        '<div class="card-price">'+mxn(item.price)+'</div>'+
+        '<div class="card-rating">'+stars(avg,item.ratings.length)+(avg?' '+avg:'')+'</div>'+
+        '<div class="card-prep">⏳ Ready in ~'+prepMin+' min</div>'+
+        '<div class="card-desc">'+item.desc+'</div>'+
+        '<div class="ingredients-tags">'+
+          item.ingredients.map(function(i){return '<span class="tag">'+i+'</span>';}).join('')+
+          item.allergens.map(function(a){return '<span class="tag allergen">⚠ '+a+'</span>';}).join('')+
+        '</div>'+
+        cartRow+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ══ BALANCE ══
+function getUserBalance(){if(!currentUser||currentUser==='ADMIN')return 0;return users[currentUser].balance||0;}
+function updateBalanceDisplay(){document.getElementById('nav-balance').textContent='$'+getUserBalance();}
+function topUp(amount){if(!currentUser||currentUser==='ADMIN')return;users[currentUser].balance=(users[currentUser].balance||0)+amount;save('users',users);updateBalanceDisplay();document.getElementById('wallet-amount').textContent=mxn(users[currentUser].balance);if(document.getElementById('cart-overlay').classList.contains('show'))renderCartDrawer();}
+function openWallet(){document.getElementById('wallet-amount').textContent=mxn(getUserBalance());document.getElementById('wallet-modal').classList.add('show');}
+function closeWallet(){document.getElementById('wallet-modal').classList.remove('show');}
+
+// ══ POLLING ══
+function startOrderPolling(){
+  setInterval(function(){
+    if(!currentUser||currentUser==='ADMIN')return;
+    var fresh=load('allOrders',[]);
+    var freshMine=fresh.filter(function(o){return o.username===currentUser&&o.status==='ready';});
+    if(freshMine.length>lastKnownReadyCt){
+      showToast('🔔 Your order is ready! Show ticket at the counter 🎟️');
+      lastKnownReadyCt=freshMine.length;allOrders=fresh;save('allOrders',allOrders);
+    }
+  },5000);
+}
+
+// ══ QUEUE ══
+function renderQueue(){
+  var c=document.getElementById('queue-content');
+  if(!allOrders.length){c.innerHTML='<div class="queue-empty">No orders yet today 📭</div>';return;}
+  var sorted=allOrders.slice().sort(function(a,b){return(a.status==='ready'?0:1)-(b.status==='ready'?0:1);});
+  c.innerHTML='<div class="queue-grid">'+sorted.map(function(o){
+    var cls=o.status==='ready'?'ready':'preparing';
+    var label=o.status==='ready'?'✓ Listo':'⏳ Preparando';
+    var itemNames=o.items.map(function(e){return e.item.emoji+(e.qty>1?' ×'+e.qty:'');}).join(' ');
+    return '<div class="queue-card '+cls+'"><div class="queue-num '+cls+'">#'+o.ticket+'</div><div><div style="font-weight:600;font-size:.88rem">'+esc(o.student)+'</div><div class="queue-status '+cls+'">'+label+'</div><div style="font-size:.72rem;color:var(--muted);margin-top:.15rem">'+itemNames+'</div></div></div>';
+  }).join('')+'</div>';
+}
+
+// ══ PROFILE ══
+function renderProfilePage(){
+  var c=document.getElementById('profile-content');
+  if(currentUser==='ADMIN'){c.innerHTML='<div style="padding:2rem;color:var(--muted)">No profile for admin.</div>';return;}
+  var u=users[currentUser];
+  var mine=allOrders.filter(function(o){return o.username===currentUser;});
+  var totalSpent=mine.reduce(function(s,o){return s+o.total;},0);
+  var favMap={};mine.forEach(function(o){o.items.forEach(function(e){favMap[e.item.name]=(favMap[e.item.name]||0)+e.qty;});});
+  var favArr=Object.keys(favMap).sort(function(a,b){return favMap[b]-favMap[a];});
+  c.innerHTML=
+    '<div class="profile-hero"><div class="profile-big-avatar">'+initials(u.name)+'</div><div><h2>'+esc(u.name)+'</h2><p>@'+esc(currentUser)+(u.grade?' · '+esc(u.grade):'')+'</p></div></div>'+
+    '<div class="profile-stats">'+
+      '<div class="pstat"><div class="pstat-num">'+mine.length+'</div><div class="pstat-label">Orders</div></div>'+
+      '<div class="pstat"><div class="pstat-num" style="font-size:1.1rem">'+mxn(totalSpent)+'</div><div class="pstat-label">Total Spent</div></div>'+
+      '<div class="pstat"><div class="pstat-num" style="color:var(--gold)">'+mxn(u.balance||0)+'</div><div class="pstat-label">Balance</div></div>'+
+      '<div class="pstat"><div class="pstat-num" style="font-size:1.3rem">'+(favArr[0]?favArr[0].split(' ')[0]+'…':'—')+'</div><div class="pstat-label">Fav Dish</div></div>'+
+    '</div>'+
+    '<div class="profile-card"><h3>✏️ Edit Info</h3>'+
+      '<div class="profile-form-row"><input id="pf-name" placeholder="Full name" value="'+esc(u.name)+'"/><input id="pf-grade" placeholder="Grade" value="'+esc(u.grade||'')+'" style="max-width:110px"/></div>'+
+      '<button class="btn btn-accent" onclick="saveProfileInfo()" style="width:100%">Save</button>'+
+    '</div>'+
+    '<div class="profile-card"><h3>⚠️ My Allergens</h3>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.75rem">'+['gluten','dairy','egg','fish','nuts','soy'].map(function(a){var on=u.allergens&&u.allergens.indexOf(a)!==-1;return '<button class="filter-chip'+(on?' active':'')+'" onclick="toggleAllergen(\''+a+'\',this)">'+a+'</button>';}).join('')+'</div>'+
+    '</div>'+
+    '<div class="profile-card"><h3>💳 Wallet — <span style="color:var(--gold)">'+mxn(u.balance||0)+'</span></h3>'+
+      '<div class="topup-row">'+ [50,100,200,500].map(function(a){return '<button class="topup-btn" onclick="topUp('+a+');renderProfilePage()">+$'+a+'</button>';}).join('')+'</div>'+
+    '</div>'+
+    '<div class="profile-card"><h3>📋 Order History</h3>'+
+      (mine.length?mine.slice().reverse().map(function(o){
+        var summary=o.items.map(function(e){return e.item.emoji+' '+e.item.name+(e.qty>1?' ×'+e.qty:'');}).join(', ');
+        return '<div class="history-item"><span style="font-size:1.2rem">🎟️</span><div style="flex:1"><div style="font-weight:600;font-size:.86rem">#'+o.ticket+' — '+mxn(o.total)+'</div><div style="font-size:.72rem;color:var(--muted)">'+summary+'</div><div style="font-size:.72rem;color:var(--muted)">'+o.time+'</div></div><span class="status-badge '+(o.status==='ready'?'status-ready':'status-pending')+'">'+(o.status==='ready'?'✓ Ready':'Pending')+'</span></div>';
+      }).join(''):'<div style="color:var(--muted);font-size:.84rem">No orders yet.</div>')+
+    '</div>';
+}
+function saveProfileInfo(){var name=document.getElementById('pf-name').value.trim();var grade=document.getElementById('pf-grade').value.trim();if(!name){alert('Name cannot be empty.');return;}users[currentUser].name=name;users[currentUser].grade=grade;save('users',users);document.getElementById('nav-username').textContent=name;document.getElementById('nav-avatar').textContent=initials(name);document.getElementById('hero-greeting').textContent='Hey, '+name.split(' ')[0]+'! 👋';renderProfilePage();}
+function toggleAllergen(a,btn){if(!users[currentUser].allergens)users[currentUser].allergens=[];var idx=users[currentUser].allergens.indexOf(a);if(idx===-1){users[currentUser].allergens.push(a);btn.classList.add('active');}else{users[currentUser].allergens.splice(idx,1);btn.classList.remove('active');}save('users',users);renderMenu();}
+
+// ══ RATING ══
+function openRatingModal(idx){
+  allOrders=load('allOrders',allOrders);
+  var o=allOrders[idx];
+  if(!o||!o.items){return;}
+  pendingRatingOrderIdx=idx;pendingRatingStar=0;
+  document.getElementById('rating-dish-name').textContent=o.items.map(function(e){return e.item.emoji+' '+e.item.name;}).join(', ');
+  var row=document.getElementById('star-row');
+  row.innerHTML=''; delete row.dataset.built;
+  renderStars(0);
+  document.getElementById('rating-modal').classList.add('show');
+}
+function closeRatingModal(){document.getElementById('rating-modal').classList.remove('show');}
+function renderStars(sel){
+  var row=document.getElementById('star-row');
+  // Only build HTML once; after that just update classes
+  if(!row.dataset.built){
+    row.innerHTML=[1,2,3,4,5].map(function(n){
+      return '<button class="star-btn" data-val="'+n+'" onclick="selectStar('+n+')">☆</button>';
+    }).join('');
+    row.dataset.built='1';
+  }
+  row.querySelectorAll('.star-btn').forEach(function(btn){
+    btn.textContent=parseInt(btn.dataset.val)<=sel?'⭐':'☆';
+  });
+}
+function selectStar(n){pendingRatingStar=n;renderStars(n);}
+function submitRating(){
+  if(!pendingRatingStar){alert('Please select a star rating.');return;}
+  // Reload from storage to get latest state
+  allOrders = load('allOrders', allOrders);
+  var order=allOrders[pendingRatingOrderIdx];
+  if(!order){closeRatingModal();return;}
+  if(order.items && order.items.length){
+    order.items.forEach(function(e){
+      var ii=menu.findIndex(function(m){return m.id===e.item.id;});
+      if(ii!==-1){menu[ii].ratings.push(pendingRatingStar);menu[ii].ratingSum+=pendingRatingStar;}
+    });
+  }
+  save('menu',menu);
+  allOrders[pendingRatingOrderIdx].rated=true;
+  save('allOrders',allOrders);
+  closeRatingModal();renderMenu();renderMyOrders();
+  showToast('⭐ Rating submitted! Thanks for your feedback.');
+}
+
+// ══ ADMIN ══
+function addDish(){
+  var name=document.getElementById('new-name').value.trim();var price=parseFloat(document.getElementById('new-price').value);var prep=parseInt(document.getElementById('new-prep').value)||8;
+  var emoji=document.getElementById('new-emoji').value.trim()||'🍽';var desc=document.getElementById('new-desc').value.trim();
+  var ingredients=document.getElementById('new-ingredients').value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var allergens=document.getElementById('new-allergens').value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+  if(!name||!price){alert('Name and price are required.');return;}
+  var nid=load('nextId',10);menu.push({id:nid++,name:name,price:price,prep:prep,emoji:emoji,desc:desc,ingredients:ingredients,allergens:allergens,ratings:[],ratingSum:0});
+  save('menu',menu);save('nextId',nid);renderMenu();renderAdminMenu();
+  ['new-name','new-price','new-prep','new-emoji','new-desc','new-ingredients','new-allergens'].forEach(function(id){document.getElementById(id).value='';});
+}
+function deleteDish(id){menu=menu.filter(function(m){return m.id!==id;});save('menu',menu);renderMenu();renderAdminMenu();}
+function renderAdminMenu(){
+  document.getElementById('admin-menu-list').innerHTML=menu.map(function(item){var avg=item.ratings.length?(item.ratingSum/item.ratings.length).toFixed(1):'—';return '<div class="admin-item"><div class="admin-item-emoji">'+item.emoji+'</div><div class="admin-item-info"><div class="admin-item-name">'+item.name+'</div><div class="admin-item-sub">'+mxn(item.price)+' · ⏳'+item.prep+'min · ⭐'+avg+'</div></div><button class="delete-btn" onclick="deleteDish('+item.id+')">🗑</button></div>';}).join('')||'<div style="color:var(--muted);font-size:.82rem">No dishes yet.</div>';
+}
+function markReady(idx){allOrders[idx].status='ready';save('allOrders',allOrders);logEvent('ORDER_READY',{ticket:allOrders[idx].ticket,student:allOrders[idx].student});renderAdminOrders();updateStats();showToast('✅ Order #'+allOrders[idx].ticket+' marked as ready!');}
+function renderAdminOrders(){
+  var list=document.getElementById('admin-orders-list');
+  if(!allOrders.length){list.innerHTML='<div style="color:var(--muted);font-size:.82rem">No orders yet today.</div>';return;}
+  list.innerHTML=allOrders.map(function(o,i){
+    var itemSummary=o.items.map(function(e){return e.item.emoji+' '+e.item.name+(e.qty>1?' ×'+e.qty:'');}).join(', ');
+    return '<div class="order-list-item">'+
+      '<div style="flex:1"><span>🎟️ <strong>#'+o.ticket+'</strong> — '+esc(o.student)+' · '+mxn(o.total)+'</span><div class="order-list-items">'+itemSummary+'</div></div>'+
+      (o.status==='pending'?'<button class="mark-ready" onclick="markReady('+i+')">Mark ready</button>':'<span class="status-badge status-ready">✓ Ready</span>')+
+    '</div>';
+  }).join('');updateStats();
+}
+function renderAdminUsers(){
+  var keys=Object.keys(users);
+  document.getElementById('admin-users-list').innerHTML=keys.length?keys.map(function(u){var ud=users[u];var oc=allOrders.filter(function(o){return o.username===u;}).length;return '<div class="admin-item"><div class="admin-item-emoji" style="font-size:1rem;width:30px;height:30px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;">'+initials(ud.name)+'</div><div class="admin-item-info"><div class="admin-item-name">'+esc(ud.name)+'</div><div class="admin-item-sub">@'+esc(u)+(ud.grade?' · '+esc(ud.grade):'')+' · '+oc+' orders · '+mxn(ud.balance||0)+'</div></div></div>';}).join(''):'<div style="color:var(--muted);font-size:.82rem">No users yet.</div>';
+}
+function updateStats(){document.getElementById('stat-total').textContent=allOrders.length;document.getElementById('stat-pending').textContent=allOrders.filter(function(o){return o.status==='pending';}).length;document.getElementById('stat-ready').textContent=allOrders.filter(function(o){return o.status==='ready';}).length;document.getElementById('stat-users').textContent=Object.keys(users).length;renderAdminUsers();}
+function printOrders(){document.getElementById('print-date-label').textContent='Printed: '+TODAY_STR+' · '+allOrders.length+' orders';window.print();}
+
+// ══ DEBUGGER ══
+var debugUnlocked=false, replayTimer=null, replayIdx=0, replayPaused=false;
+
+function adminGate2(btn){
+  if(currentUser!=='ADMIN'){showToast('🔒 Admin access only.');return;}
+  showPage('debug',btn);
+  if(!debugUnlocked){
+    document.getElementById('debug-lock').style.display='flex';
+    document.getElementById('debug-content').style.display='none';
+    setTimeout(function(){document.getElementById('debug-pw').focus();},100);
+  } else { renderDebugPage(); }
+}
+function checkDebugPw(){
+  var pw=document.getElementById('debug-pw').value;
+  if(pw===ADMIN_PASSWORD){
+    debugUnlocked=true;
+    document.getElementById('debug-pw').value='';
+    document.getElementById('debug-pw-error').textContent='';
+    document.getElementById('debug-lock').style.display='none';
+    document.getElementById('debug-content').style.display='block';
+    document.getElementById('auto-close-toggle').checked=autoCloseEnabled;
+    document.getElementById('auto-close-limit').value=AUTO_CLOSE_LIMIT;
+    renderDebugPage();
+  } else {
+    document.getElementById('debug-pw-error').textContent='Incorrect password.';
+    document.getElementById('debug-pw').value='';
+  }
+}
+function saveAutoClose(){
+  autoCloseEnabled=document.getElementById('auto-close-toggle').checked;
+  AUTO_CLOSE_LIMIT=parseInt(document.getElementById('auto-close-limit').value)||20;
+  save('autoCloseEnabled',autoCloseEnabled); save('autoCloseLimit',AUTO_CLOSE_LIMIT);
+}
+function renderDebugPage(){
+  var display=document.getElementById('event-log-display');
+  var count=document.getElementById('event-count');
+  if(!display) return;
+  eventLog=load('eventLog',[]);
+  count.textContent=eventLog.length+' events';
+  if(!eventLog.length){display.innerHTML='<span style="color:#666">No events yet. Place an order to start logging.</span>';return;}
+  display.innerHTML=eventLog.slice().reverse().map(function(e,i){
+    var cls='ev-'+(e.type||'');
+    var detail='';
+    if(e.data){
+      if(e.data.ticket) detail+=' #'+e.data.ticket;
+      if(e.data.student) detail+=' — '+e.data.student;
+      if(e.data.total) detail+=' ('+mxn(e.data.total)+')';
+      if(e.data.pending!==undefined) detail+=' pending='+e.data.pending;
+    }
+    return '<div class="event-entry"><span class="'+cls+'">['+e.type+']</span> <span style="color:#888">'+e.time+'</span>'+detail+'</div>';
+  }).join('');
+}
+function startReplay(){
+  eventLog=load('eventLog',[]);
+  if(!eventLog.length){showToast('No events to replay.');return;}
+  replayIdx=0; replayPaused=false;
+  var display=document.getElementById('event-log-display');
+  display.innerHTML='<span style="color:#e8572a;font-weight:700">▶ Replaying '+eventLog.length+' events...</span><br/>';
+  clearInterval(replayTimer);
+  replayTimer=setInterval(function(){
+    if(replayPaused) return;
+    if(replayIdx>=eventLog.length){clearInterval(replayTimer);display.innerHTML+='<br/><span style="color:#2db37a;font-weight:700">✅ Replay complete.</span>';return;}
+    var e=eventLog[replayIdx++];
+    var cls='ev-'+(e.type||'');
+    var detail=''; if(e.data){if(e.data.ticket)detail+=' #'+e.data.ticket;if(e.data.student)detail+=' — '+e.data.student;}
+    display.innerHTML+='<div class="event-entry"><span class="'+cls+'">['+e.type+']</span> <span style="color:#888">'+e.time+'</span>'+detail+'</div>';
+    display.scrollTop=display.scrollHeight;
+  },600);
+}
+function pauseReplay(){replayPaused=!replayPaused;showToast(replayPaused?'⏸ Replay paused':'▶ Replay resumed');}
+function stopReplay(){clearInterval(replayTimer);replayIdx=0;renderDebugPage();showToast('⏹ Replay stopped.');}
+function clearEventLog(){if(!confirm('Clear all event logs?'))return;eventLog=[];save('eventLog',[]);renderDebugPage();showToast('🗑 Event log cleared.');}
+
+// Show debugger tab to admin
+function showDebuggerIfAdmin(){if(currentUser==='ADMIN'){document.getElementById('debug-nav-btn').style.display='';}}
+
+// ══ ADMIN LOCK ══
+function adminGate(btn){showPage('admin',btn);if(!adminUnlocked){document.getElementById('admin-lock').style.display='flex';document.getElementById('admin-content').style.display='none';setTimeout(function(){document.getElementById('admin-pw').focus();},100);}}
+function checkPw(){var pw=document.getElementById('admin-pw').value;if(pw===ADMIN_PASSWORD){adminUnlocked=true;document.getElementById('admin-pw').value='';document.getElementById('pw-error').textContent='';document.getElementById('admin-lock').style.display='none';document.getElementById('admin-content').style.display='block';document.getElementById('cutoff-enabled').checked=cutoff.enabled;document.getElementById('cutoff-time').value=cutoff.time;document.getElementById('cutoff-status').textContent=cutoff.enabled?(isOrderingOpen()?'✅ Open':'🔴 Closed'):'';renderAdminMenu();renderAdminOrders();updateStats();}else{document.getElementById('pw-error').textContent='Incorrect password.';document.getElementById('admin-pw').value='';document.getElementById('admin-pw').focus();}}
+function lockAdmin(){adminUnlocked=false;document.getElementById('admin-lock').style.display='flex';document.getElementById('admin-content').style.display='none';showPage('menu',document.querySelectorAll('.nav-tab')[0]);}
+</script>
+
+<!-- ADMIN LOGIN MODAL -->
+<div class="modal-overlay" id="admin-login-modal">
+  <div class="modal" style="max-width:360px">
+    <h2>⚙️ Admin Sign In</h2>
+    <p>Enter the admin password to continue.</p>
+    <input class="auth-input" id="admin-login-pw" type="password" placeholder="Admin password" onkeydown="if(event.key==='Enter')submitAdminLogin()" style="margin-bottom:.5rem"/>
+    <div class="auth-error" id="admin-login-error" style="margin-bottom:1rem"></div>
+    <div style="display:flex;gap:.65rem">
+      <button class="btn btn-outline" onclick="closeAdminLoginModal()" style="flex:1">Cancel</button>
+      <button class="btn btn-accent" onclick="submitAdminLogin()" style="flex:1">Sign In →</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
